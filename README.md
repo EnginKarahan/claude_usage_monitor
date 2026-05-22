@@ -44,7 +44,7 @@ immediate cache re-read.
 
 ```bash
 git clone https://github.com/EnginKarahan/claude_usage_monitor.git
-cd claude-usage-monitor
+cd claude_usage_monitor
 ./install.sh
 ```
 
