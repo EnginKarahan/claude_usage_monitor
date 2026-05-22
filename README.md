@@ -2,6 +2,8 @@
 
 [Auf Deutsch lesen](README.de.md)
 
+![Screenshot of the panel pills and detail tooltip](docs/screenshot.png)
+
 A subtle taskbar widget for **KDE Plasma 6** (tested on Plasma 6.6, Fedora 44)
 that shows your Claude.ai Pro/Max **session** (5-hour) and **weekly** (7-day)
 token utilization with a forecast for the next reset.

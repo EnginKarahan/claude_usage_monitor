@@ -2,6 +2,8 @@
 
 [Read in English](README.md)
 
+![Screenshot der Pills in der Leiste und des Detail-Tooltips](docs/screenshot.png)
+
 Ein dezentes Taskleisten-Widget für **KDE Plasma 6** (getestet auf
 Plasma 6.6, Fedora 44), das deinen Claude.ai-Pro/Max-**Sitzungs**- (5 h)
 und **Wochen**-Tokenverbrauch (7 d) anzeigt, samt Prognose bis zum
