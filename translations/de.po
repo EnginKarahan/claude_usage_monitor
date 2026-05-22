@@ -1,0 +1,87 @@
+# SPDX-FileCopyrightText: 2026 Engin Karahan <engin.karahan@gmail.com>
+# SPDX-License-Identifier: MIT
+# German translation for Claude Usage Monitor.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: claude-usage-monitor 0.1.0\n"
+"PO-Revision-Date: 2026-05-22 12:00+0000\n"
+"Last-Translator: Engin Karahan <engin.karahan@gmail.com>\n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Claude Usage Monitor"
+msgstr "Claude-Nutzungsanzeige"
+
+#, qt-format
+msgid "Error: %1"
+msgstr "Fehler: %1"
+
+msgid "Waiting for first poll…"
+msgstr "Warte auf ersten Datenabruf…"
+
+#, qt-format
+msgid "<b>Session (5h)</b>: %1% used, projected %2 at reset in %3<br/><i>%4</i>"
+msgstr "<b>Sitzung (5 h)</b>: %1 % verbraucht, Prognose %2 bei Reset in %3<br/><i>%4</i>"
+
+#, qt-format
+msgid "<b>Weekly (7d)</b>: %1% used, projected %2 at reset in %3<br/><i>%4</i>"
+msgstr "<b>Woche (7 d)</b>: %1 % verbraucht, Prognose %2 bei Reset in %3<br/><i>%4</i>"
+
+msgid "<small>Click to expand · Middle-click to refresh</small>"
+msgstr "<small>Klick öffnet Details · Mittelklick aktualisiert</small>"
+
+#, qt-format
+msgid "⚠ %1"
+msgstr "⚠ %1"
+
+msgid "Session (5-hour window)"
+msgstr "Sitzung (5-Stunden-Fenster)"
+
+msgid "Weekly (7-day window)"
+msgstr "Woche (7-Tage-Fenster)"
+
+#, qt-format
+msgid "Last poll: %1 · Plan: %2"
+msgstr "Letzter Abruf: %1 · Plan: %2"
+
+msgid "Refresh"
+msgstr "Aktualisieren"
+
+msgid "no data"
+msgstr "keine Daten"
+
+msgid "Used now"
+msgstr "Aktuell verbraucht"
+
+msgid "Projected at reset"
+msgstr "Prognose bei Reset"
+
+#, qt-format
+msgid "%1 (no rate yet)"
+msgstr "%1 (noch keine Rate)"
+
+msgid "Burn rate"
+msgstr "Verbrauchsrate"
+
+msgid "Reset in"
+msgstr "Reset in"
+
+msgid "under-utilized — tokens may be wasted"
+msgstr "unterausgelastet — Tokens werden verschwendet"
+
+msgid "on track"
+msgstr "im Plan"
+
+msgid "approaching limit"
+msgstr "nahe am Limit"
+
+msgid "projected to exceed limit"
+msgstr "Limit wird voraussichtlich überschritten"
+
+msgid "unknown"
+msgstr "unbekannt"

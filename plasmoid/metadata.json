@@ -1,0 +1,25 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "com.karahan.claudewidget",
+        "Name": "Claude Usage Monitor",
+        "Name[de]": "Claude-Nutzungsanzeige",
+        "Name[tr]": "Claude Kullanım İzleyici",
+        "Description": "Unofficial Plasma 6 indicator for Claude.ai session and weekly token usage with reset forecast. Not affiliated with Anthropic.",
+        "Description[de]": "Inoffizielle Plasma-6-Anzeige für Claude.ai-Session- und Wochen-Tokenverbrauch mit Reset-Prognose. Nicht mit Anthropic verbunden.",
+        "Description[tr]": "Claude.ai oturum ve haftalık token kullanımı için resmi olmayan Plasma 6 göstergesi, sıfırlama tahminiyle. Anthropic ile bağlantılı değildir.",
+        "Authors": [
+            {
+                "Name": "Engin Karahan",
+                "Email": "engin.karahan@gmail.com"
+            }
+        ],
+        "Category": "System Information",
+        "Icon": "view-statistics",
+        "License": "MIT",
+        "Version": "0.1.0",
+        "Website": "https://github.com/enginkarahan/claude-usage-monitor",
+        "EnabledByDefault": true
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

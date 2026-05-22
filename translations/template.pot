@@ -1,0 +1,111 @@
+# SPDX-FileCopyrightText: 2026 Engin Karahan <engin.karahan@gmail.com>
+# SPDX-License-Identifier: MIT
+# Translation template for Claude Usage Monitor (KDE Plasma 6 plasmoid).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: claude-usage-monitor 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/enginkarahan/claude-usage-monitor/issues\n"
+"POT-Creation-Date: 2026-05-22\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+
+#: plasmoid/contents/ui/CompactRepresentation.qml
+#: plasmoid/contents/ui/FullRepresentation.qml
+msgid "Claude Usage Monitor"
+msgstr ""
+
+#: plasmoid/contents/ui/CompactRepresentation.qml
+#, qt-format
+msgid "Error: %1"
+msgstr ""
+
+#: plasmoid/contents/ui/CompactRepresentation.qml
+msgid "Waiting for first poll…"
+msgstr ""
+
+#: plasmoid/contents/ui/CompactRepresentation.qml
+#, qt-format
+msgid "<b>Session (5h)</b>: %1% used, projected %2 at reset in %3<br/><i>%4</i>"
+msgstr ""
+
+#: plasmoid/contents/ui/CompactRepresentation.qml
+#, qt-format
+msgid "<b>Weekly (7d)</b>: %1% used, projected %2 at reset in %3<br/><i>%4</i>"
+msgstr ""
+
+#: plasmoid/contents/ui/CompactRepresentation.qml
+msgid "<small>Click to expand · Middle-click to refresh</small>"
+msgstr ""
+
+#: plasmoid/contents/ui/FullRepresentation.qml
+#, qt-format
+msgid "⚠ %1"
+msgstr ""
+
+#: plasmoid/contents/ui/FullRepresentation.qml
+msgid "Session (5-hour window)"
+msgstr ""
+
+#: plasmoid/contents/ui/FullRepresentation.qml
+msgid "Weekly (7-day window)"
+msgstr ""
+
+#: plasmoid/contents/ui/FullRepresentation.qml
+#, qt-format
+msgid "Last poll: %1 · Plan: %2"
+msgstr ""
+
+#: plasmoid/contents/ui/FullRepresentation.qml
+msgid "Refresh"
+msgstr ""
+
+#: plasmoid/contents/ui/BucketView.qml
+msgid "no data"
+msgstr ""
+
+#: plasmoid/contents/ui/BucketView.qml
+msgid "Used now"
+msgstr ""
+
+#: plasmoid/contents/ui/BucketView.qml
+msgid "Projected at reset"
+msgstr ""
+
+#: plasmoid/contents/ui/BucketView.qml
+#, qt-format
+msgid "%1 (no rate yet)"
+msgstr ""
+
+#: plasmoid/contents/ui/BucketView.qml
+msgid "Burn rate"
+msgstr ""
+
+#: plasmoid/contents/ui/BucketView.qml
+msgid "Reset in"
+msgstr ""
+
+#: plasmoid/contents/ui/main.qml
+msgid "under-utilized — tokens may be wasted"
+msgstr ""
+
+#: plasmoid/contents/ui/main.qml
+msgid "on track"
+msgstr ""
+
+#: plasmoid/contents/ui/main.qml
+msgid "approaching limit"
+msgstr ""
+
+#: plasmoid/contents/ui/main.qml
+msgid "projected to exceed limit"
+msgstr ""
+
+#: plasmoid/contents/ui/main.qml
+msgid "unknown"
+msgstr ""

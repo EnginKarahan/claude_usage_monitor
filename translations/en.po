@@ -1,0 +1,87 @@
+# SPDX-FileCopyrightText: 2026 Engin Karahan <engin.karahan@gmail.com>
+# SPDX-License-Identifier: MIT
+# English translation for Claude Usage Monitor (source language — identity mapping).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: claude-usage-monitor 0.1.0\n"
+"PO-Revision-Date: 2026-05-22 12:00+0000\n"
+"Last-Translator: Engin Karahan <engin.karahan@gmail.com>\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Claude Usage Monitor"
+msgstr "Claude Usage Monitor"
+
+#, qt-format
+msgid "Error: %1"
+msgstr "Error: %1"
+
+msgid "Waiting for first poll…"
+msgstr "Waiting for first poll…"
+
+#, qt-format
+msgid "<b>Session (5h)</b>: %1% used, projected %2 at reset in %3<br/><i>%4</i>"
+msgstr "<b>Session (5h)</b>: %1% used, projected %2 at reset in %3<br/><i>%4</i>"
+
+#, qt-format
+msgid "<b>Weekly (7d)</b>: %1% used, projected %2 at reset in %3<br/><i>%4</i>"
+msgstr "<b>Weekly (7d)</b>: %1% used, projected %2 at reset in %3<br/><i>%4</i>"
+
+msgid "<small>Click to expand · Middle-click to refresh</small>"
+msgstr "<small>Click to expand · Middle-click to refresh</small>"
+
+#, qt-format
+msgid "⚠ %1"
+msgstr "⚠ %1"
+
+msgid "Session (5-hour window)"
+msgstr "Session (5-hour window)"
+
+msgid "Weekly (7-day window)"
+msgstr "Weekly (7-day window)"
+
+#, qt-format
+msgid "Last poll: %1 · Plan: %2"
+msgstr "Last poll: %1 · Plan: %2"
+
+msgid "Refresh"
+msgstr "Refresh"
+
+msgid "no data"
+msgstr "no data"
+
+msgid "Used now"
+msgstr "Used now"
+
+msgid "Projected at reset"
+msgstr "Projected at reset"
+
+#, qt-format
+msgid "%1 (no rate yet)"
+msgstr "%1 (no rate yet)"
+
+msgid "Burn rate"
+msgstr "Burn rate"
+
+msgid "Reset in"
+msgstr "Reset in"
+
+msgid "under-utilized — tokens may be wasted"
+msgstr "under-utilized — tokens may be wasted"
+
+msgid "on track"
+msgstr "on track"
+
+msgid "approaching limit"
+msgstr "approaching limit"
+
+msgid "projected to exceed limit"
+msgstr "projected to exceed limit"
+
+msgid "unknown"
+msgstr "unknown"

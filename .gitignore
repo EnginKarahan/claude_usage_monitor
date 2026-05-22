@@ -1,0 +1,27 @@
+# Build artifacts
+*.plasmoid
+*.tar.gz
+build/
+dist/
+
+# i18n compilation intermediates (we ship .mo files, not auto-generated .pot edits)
+*.pot~
+
+# Local cache, never commit (would leak usage history)
+.cache/
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Claude Code / agent settings
+.claude/

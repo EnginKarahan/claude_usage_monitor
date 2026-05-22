@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2026 Engin Karahan <engin.karahan@gmail.com>
+# SPDX-License-Identifier: MIT
+
+[Unit]
+Description=Periodic Claude usage poll for the KDE widget
+
+[Timer]
+# Run shortly after login, then every 5 minutes.
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Persistent=true
+Unit=claude-widget-poll.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 Engin Karahan <engin.karahan@gmail.com>
+# SPDX-License-Identifier: MIT
+
+[Unit]
+Description=Poll Claude usage endpoint and update widget cache
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/claude-widget-poll
+Nice=10
+# Keep logs short — this fires every few minutes.
+StandardOutput=journal
+StandardError=journal
