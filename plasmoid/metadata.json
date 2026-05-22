@@ -18,7 +18,7 @@
         "Icon": "view-statistics",
         "License": "MIT",
         "Version": "0.1.0",
-        "Website": "https://github.com/enginkarahan/claude-usage-monitor",
+        "Website": "https://github.com/EnginKarahan/claude_usage_monitor",
         "EnabledByDefault": true
     },
     "X-Plasma-API-Minimum-Version": "6.0"

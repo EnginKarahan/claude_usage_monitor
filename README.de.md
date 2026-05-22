@@ -46,7 +46,7 @@ Mittelklick erzwingt sofortiges Neu-Lesen des Caches.
 ## Installation (aus dem Quellcode)
 
 ```bash
-git clone https://github.com/enginkarahan/claude-usage-monitor.git
+git clone https://github.com/EnginKarahan/claude_usage_monitor.git
 cd claude-usage-monitor
 ./install.sh
 ```

@@ -28,7 +28,7 @@ xgettext \
     --keyword=i18ncp:1c,2,3 \
     --package-name="claude-usage-monitor" \
     --package-version="0.1.0" \
-    --msgid-bugs-address="https://github.com/enginkarahan/claude-usage-monitor/issues" \
+    --msgid-bugs-address="https://github.com/EnginKarahan/claude_usage_monitor/issues" \
     --output=translations/template.pot \
     plasmoid/contents/ui/*.qml
 
