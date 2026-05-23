@@ -102,9 +102,10 @@ das Plasmoid aus.
 ## Nützliche Befehle
 
 ```bash
-systemctl --user status  claude-widget-poll.timer
-systemctl --user start   claude-widget-poll.service   # jetzt pollen
-journalctl   --user -u   claude-widget-poll -f         # Poller-Logs verfolgen
+systemctl --user enable --now claude-widget-poll.timer  # Timer aktivieren + starten
+systemctl --user status       claude-widget-poll.timer
+systemctl --user start        claude-widget-poll.service   # jetzt pollen
+journalctl   --user -u        claude-widget-poll -f         # Poller-Logs verfolgen
 
 # Letzten Status zeigen:
 jq . ~/.cache/claude-widget/status.json

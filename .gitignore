@@ -6,6 +6,7 @@ dist/
 
 # i18n compilation intermediates (we ship .mo files, not auto-generated .pot edits)
 *.pot~
+*.mo
 
 # Local cache, never commit (would leak usage history)
 .cache/

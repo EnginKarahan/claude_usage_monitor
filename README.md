@@ -96,9 +96,10 @@ only handles the plasmoid itself.
 ## Useful commands
 
 ```bash
-systemctl --user status  claude-widget-poll.timer
-systemctl --user start   claude-widget-poll.service   # poll now
-journalctl   --user -u   claude-widget-poll -f         # follow poller logs
+systemctl --user enable --now claude-widget-poll.timer  # enable + start timer
+systemctl --user status       claude-widget-poll.timer
+systemctl --user start        claude-widget-poll.service   # poll now
+journalctl   --user -u        claude-widget-poll -f         # follow poller logs
 
 # Show last status:
 jq . ~/.cache/claude-widget/status.json
