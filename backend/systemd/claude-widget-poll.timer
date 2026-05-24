@@ -5,10 +5,10 @@
 Description=Periodic Claude usage poll for the KDE widget
 
 [Timer]
-# Run shortly after login, then every 5 minutes.
+# Run shortly after login, then every 15 minutes.
 OnBootSec=2min
-OnUnitActiveSec=5min
-AccuracySec=30s
+OnUnitActiveSec=15min
+AccuracySec=60s
 Persistent=true
 Unit=claude-widget-poll.service
 

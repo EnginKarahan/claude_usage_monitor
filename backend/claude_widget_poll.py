@@ -222,14 +222,19 @@ def main() -> int:
         raw = _http_get(USAGE_URL, token)
     except urllib.error.HTTPError as e:
         body = e.read().decode("utf-8", errors="replace") if e.fp else ""
+        retry_after = e.headers.get("Retry-After") if e.headers else None
+        error_msg = f"HTTP {e.code}"
+        if e.code == 429:
+            error_msg = f"Rate limited (HTTP 429)"
+            if retry_after:
+                error_msg += f" — retry after {retry_after}s"
         payload = {
             "ok": False,
             "fetched_at": datetime.now(timezone.utc).isoformat(),
-            "error": f"HTTP {e.code}",
+            "error": error_msg,
             "body": body[:500],
         }
         _atomic_write(STATUS_PATH, payload)
-        # 401 likely means token expired — let user know in stderr.
         print(f"HTTP {e.code} from usage endpoint: {body[:200]}", file=sys.stderr)
         return 2
     except urllib.error.URLError as e:
