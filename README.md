@@ -52,7 +52,7 @@ cd claude_usage_monitor
 
 This:
 - installs `~/.local/bin/claude-widget-poll` (the Python poller)
-- installs and enables a systemd user timer that polls every 15 min
+- installs and enables a systemd user timer that polls every 20 min
 - installs the plasmoid via `kpackagetool6`
 
 Then in KDE: right-click the panel → *Add or manage widgets…* → search for
@@ -84,7 +84,7 @@ only handles the plasmoid itself.
    - Writes `~/.cache/claude-widget/status.json` atomically.
 
 2. **systemd user timer** (`backend/systemd/`)
-   - `claude-widget-poll.timer` triggers the service every 15 min.
+   - `claude-widget-poll.timer` triggers the service every 20 min.
    - Survives reboots (`Persistent=true`); fires once 2 min after login.
 
 3. **Frontend** (`plasmoid/`)

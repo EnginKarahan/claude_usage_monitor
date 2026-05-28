@@ -55,7 +55,7 @@ cd claude_usage_monitor
 
 Dabei wird:
 - `~/.local/bin/claude-widget-poll` (Python-Poller) installiert
-- ein systemd-User-Timer eingerichtet und aktiviert (Polling alle 15 min)
+- ein systemd-User-Timer eingerichtet und aktiviert (Polling alle 20 min)
 - das Plasmoid via `kpackagetool6` installiert
 
 Danach in KDE: Rechtsklick auf die Leiste → *Elemente hinzufügen oder
@@ -90,7 +90,7 @@ das Plasmoid aus.
    - Schreibt `~/.cache/claude-widget/status.json` atomar.
 
 2. **systemd-User-Timer** (`backend/systemd/`)
-   - `claude-widget-poll.timer` triggert den Dienst alle 15 min.
+   - `claude-widget-poll.timer` triggert den Dienst alle 20 min.
    - Übersteht Neustarts (`Persistent=true`); feuert 2 min nach Login
      einmal initial.
 
