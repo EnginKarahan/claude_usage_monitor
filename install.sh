@@ -75,7 +75,7 @@ Next steps:
   1. Right-click your top panel → "Add or manage widgets…"
   2. Search for "Claude Token Monitor" and drag it to the center.
   3. The widget reads $HOME/.cache/claude-widget/status.json,
-     refreshed by the systemd timer every 5 minutes.
+     refreshed by the systemd timer every 20 minutes.
 
 Useful commands:
   systemctl --user status claude-widget-poll.timer
