@@ -52,6 +52,9 @@ msgstr "Letzter Abruf: %1 · Plan: %2"
 msgid "Refresh"
 msgstr "Aktualisieren"
 
+msgid "Refreshing…"
+msgstr "Wird aktualisiert…"
+
 msgid "no data"
 msgstr "keine Daten"
 

@@ -64,7 +64,8 @@ Item {
             }
             QQC2.Button {
                 icon.name: "view-refresh"
-                text: i18n("Refresh")
+                text: full.rootItem.refreshing ? i18n("Refreshing…") : i18n("Refresh")
+                enabled: !full.rootItem.refreshing
                 onClicked: full.rootItem.reload()
             }
         }

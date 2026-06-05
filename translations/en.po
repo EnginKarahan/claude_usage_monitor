@@ -52,6 +52,9 @@ msgstr "Last poll: %1 · Plan: %2"
 msgid "Refresh"
 msgstr "Refresh"
 
+msgid "Refreshing…"
+msgstr "Refreshing…"
+
 msgid "no data"
 msgstr "no data"
 

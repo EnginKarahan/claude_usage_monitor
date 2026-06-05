@@ -55,6 +55,9 @@ msgstr "Son sorgu: %1 · Plan: %2"
 msgid "Refresh"
 msgstr "Yenile"
 
+msgid "Refreshing…"
+msgstr "Yenileniyor…"
+
 msgid "no data"
 msgstr "veri yok"
 

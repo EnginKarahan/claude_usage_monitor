@@ -65,6 +65,10 @@ msgstr ""
 msgid "Refresh"
 msgstr ""
 
+#: plasmoid/contents/ui/FullRepresentation.qml
+msgid "Refreshing…"
+msgstr ""
+
 #: plasmoid/contents/ui/BucketView.qml
 msgid "no data"
 msgstr ""
