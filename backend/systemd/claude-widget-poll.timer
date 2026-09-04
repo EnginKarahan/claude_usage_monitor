@@ -5,9 +5,10 @@
 Description=Periodic Claude usage poll for the KDE widget
 
 [Timer]
-# Run shortly after login, then every 20 minutes.
+# Run shortly after login, then every 10 minutes. On HTTP 429 the
+# poller itself skips ticks until the Retry-After deadline has passed.
 OnBootSec=2min
-OnUnitActiveSec=20min
+OnUnitActiveSec=10min
 AccuracySec=60s
 Persistent=true
 Unit=claude-widget-poll.service

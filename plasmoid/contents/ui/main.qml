@@ -71,7 +71,7 @@ PlasmoidItem {
     }
 
     // Manual refresh: actually trigger a fresh poll (the systemd timer only
-    // fires every 20 min, so re-reading the cache alone shows no change),
+    // fires every 10 min, so re-reading the cache alone shows no change),
     // then re-read the status file. The oneshot service blocks until done,
     // so the cat after it sees the freshly written JSON. `;` (not `&&`)
     // ensures we still read the file when the poll exits non-zero — the
