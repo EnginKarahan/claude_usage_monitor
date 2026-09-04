@@ -34,9 +34,14 @@ Color (per pill, computed independently):
 | 🟡 Yellow | Projected 100–103% — approaching the limit.                          |
 | 🔴 Red    | Projected ≥103% — you'll run out before reset.                       |
 
-The projection uses a rolling burn-rate from recent poll samples and is
-bounded to a 4-hour horizon (so a single burst right after a window reset
-doesn't extrapolate into the next week).
+The **session** projection uses a rolling burn-rate from recent poll
+samples, bounded to a 4-hour horizon (so a single burst right after a
+window reset doesn't explode the forecast).
+
+The **weekly** projection is pace-based: if you've used X % after a
+fraction f of the 7-day window, you're on track for X / f at reset. The
+first 24 h count as one full day so a burst right after the roll-over
+isn't extrapolated to thousands of percent.
 
 Hover for a tooltip with the full numbers; click to open a detail panel with
 progress bars, burn rate, and time to reset. Middle-click forces an
@@ -52,7 +57,7 @@ cd claude_usage_monitor
 
 This:
 - installs `~/.local/bin/claude-widget-poll` (the Python poller)
-- installs and enables a systemd user timer that polls every 20 min
+- installs and enables a systemd user timer that polls every 10 min
 - installs the plasmoid via `kpackagetool6`
 
 Then in KDE: right-click the panel → *Add or manage widgets…* → search for
@@ -84,7 +89,8 @@ only handles the plasmoid itself.
    - Writes `~/.cache/claude-widget/status.json` atomically.
 
 2. **systemd user timer** (`backend/systemd/`)
-   - `claude-widget-poll.timer` triggers the service every 20 min.
+   - `claude-widget-poll.timer` triggers the service every 10 min. On HTTP 429 the poller
+     honours `Retry-After` and skips ticks until the hold expires.
    - Survives reboots (`Persistent=true`); fires once 2 min after login.
 
 3. **Frontend** (`plasmoid/`)
@@ -123,10 +129,8 @@ systemctl --user restart plasma-plasmashell
 - The OAuth `accessToken` expires periodically. Claude Code refreshes it
   on each interactive session; if you don't use `claude` for a while and
   the widget shows `HTTP 401`, run `claude` once to refresh.
-- The `seven_day` window appears to roll hourly rather than weekly — the
-  `resets_at` field is the next hourly tick, not "end of week". The widget
-  caps its projection horizon at 4 hours so this doesn't produce
-  nonsensical numbers.
+- The `seven_day` window is assumed to span exactly 7 days ending at
+  `resets_at`; the pace projection derives the window start from that.
 
 ## License
 

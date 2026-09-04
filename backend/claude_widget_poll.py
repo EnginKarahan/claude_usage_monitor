@@ -25,13 +25,15 @@ CREDENTIALS_PATH = Path.home() / ".claude" / ".credentials.json"
 CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "claude-widget"
 STATUS_PATH = CACHE_DIR / "status.json"
 HISTORY_PATH = CACHE_DIR / "history.json"
+# Written on HTTP 429: a unix timestamp before which polls are skipped.
+BACKOFF_PATH = CACHE_DIR / "backoff"
 
 USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
 REFRESH_URL = "https://console.anthropic.com/v1/oauth/token"
 USER_AGENT = "claude-widget/0.1 (KDE plasmoid poller)"
 
 # How many recent samples to keep for burn-rate computation.
-HISTORY_MAX = 24  # ~2h at 5-min cadence
+HISTORY_MAX = 24  # ~4h at 10-min cadence
 # Minimum elapsed time between two samples to trust a burn-rate calc.
 MIN_BURN_WINDOW_S = 60
 # Cap on projected utilization stored in status.json. The classification
@@ -41,11 +43,20 @@ PROJECTION_CAP = 200.0
 # Treat a util drop bigger than this (vs. the next-newer sample) as a
 # window reset so older samples are excluded from the burn-rate window.
 RESET_DROP_THRESHOLD = 5.0
-# Don't extrapolate burn rate further than this into the future. The
-# weekly window reset can be 7 days away (just after the previous one);
-# multiplying a 5-min burn-rate sample by 7 days gives nonsensical
-# projections. Project at most this far, regardless of actual window end.
+# Don't extrapolate the session burn rate further than this into the
+# future; a 5-min burst right after a reset shouldn't be multiplied by
+# the full remaining window.
 MAX_PROJECTION_HORIZON_S = 4 * 3600  # 4 hours
+# Nominal window lengths. The weekly bucket is projected by *pace*
+# (utilization so far vs. fraction of the window elapsed), not by the
+# short-term burn rate: a 4-hour horizon on a 7-day window would always
+# land a few percent above "now" and stay blue all week.
+WEEKLY_WINDOW_S = 7 * 24 * 3600
+# Pretend at least this much of the weekly window has elapsed when
+# computing pace. Right after a roll-over, 3 % used in 20 minutes would
+# otherwise extrapolate to thousands of percent; with the floor, the
+# first day's usage is treated as one representative day.
+MIN_PACE_ELAPSED_S = 24 * 3600
 
 # Color thresholds applied to PROJECTED utilization at reset time.
 #   blue  : will leave tokens on the table
@@ -55,6 +66,11 @@ MAX_PROJECTION_HORIZON_S = 4 * 3600  # 4 hours
 THRESH_BLUE_MAX = 95.0
 THRESH_GREEN_MAX = 100.0
 THRESH_YELLOW_MAX = 103.0
+
+# Rate limiting: honour Retry-After on HTTP 429; without a header, hold
+# off this long. Later timer ticks are skipped until the hold expires.
+DEFAULT_BACKOFF_S = 30 * 60
+MAX_BACKOFF_S = 6 * 3600
 
 
 @dataclass
@@ -184,6 +200,7 @@ def _evaluate(
     history: list[dict],
     now_ts: float,
 ) -> dict | None:
+    """Short-horizon forecast from the recent burn rate (session bucket)."""
     if bucket is None:
         return None
     resets_in_s = max(0.0, (bucket.resets_at - datetime.now(timezone.utc)).total_seconds())
@@ -192,12 +209,36 @@ def _evaluate(
         projected = bucket.utilization
         forecast_available = False
     else:
-        # Don't extrapolate further than MAX_PROJECTION_HORIZON_S — for the
-        # weekly bucket, resets_in_s can be ~7 days right after a roll-over,
-        # which makes linear projection meaningless.
         horizon_s = min(resets_in_s, MAX_PROJECTION_HORIZON_S)
         projected = bucket.utilization + burn * horizon_s
         forecast_available = True
+    return _result(bucket, resets_in_s, projected, burn, forecast_available)
+
+
+def _evaluate_pace(bucket: Bucket | None, window_s: float) -> dict | None:
+    """Whole-window forecast by pace (weekly bucket).
+
+    The window is assumed to span exactly `window_s` ending at resets_at.
+    If X % is used after fraction f of the window, the linear projection
+    at reset is X / f. The reported burn rate is the average since the
+    window started, so it matches the projection.
+    """
+    if bucket is None:
+        return None
+    resets_in_s = max(0.0, (bucket.resets_at - datetime.now(timezone.utc)).total_seconds())
+    elapsed_s = max(window_s - resets_in_s, MIN_PACE_ELAPSED_S)
+    burn = bucket.utilization / elapsed_s
+    projected = burn * window_s
+    return _result(bucket, resets_in_s, projected, burn, True)
+
+
+def _result(
+    bucket: Bucket,
+    resets_in_s: float,
+    projected: float,
+    burn: float | None,
+    forecast_available: bool,
+) -> dict:
     state = _classify(projected, bucket.utilization, resets_in_s)
     return {
         "utilization": round(bucket.utilization, 1),
@@ -211,7 +252,33 @@ def _evaluate(
     }
 
 
+def _read_backoff_until() -> float:
+    try:
+        return float(BACKOFF_PATH.read_text().strip())
+    except (OSError, ValueError):
+        return 0.0
+
+
+def _write_backoff(retry_after: str | None, now_ts: float) -> float:
+    """Persist a hold-off deadline derived from Retry-After (seconds)."""
+    try:
+        wait = float(retry_after) if retry_after else DEFAULT_BACKOFF_S
+    except ValueError:
+        wait = DEFAULT_BACKOFF_S
+    wait = min(max(wait, 60.0), MAX_BACKOFF_S)
+    until = now_ts + wait
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    BACKOFF_PATH.write_text(str(until))
+    return until
+
+
 def main() -> int:
+    now_ts = time.time()
+    backoff_until = _read_backoff_until()
+    if now_ts < backoff_until:
+        remaining = int(backoff_until - now_ts)
+        print(f"Skipping poll: rate-limit hold for another {remaining}s", file=sys.stderr)
+        return 0
     creds = _read_credentials()
     oauth = creds.get("claudeAiOauth", {})
     token = oauth.get("accessToken")
@@ -225,9 +292,9 @@ def main() -> int:
         retry_after = e.headers.get("Retry-After") if e.headers else None
         error_msg = f"HTTP {e.code}"
         if e.code == 429:
-            error_msg = f"Rate limited (HTTP 429)"
-            if retry_after:
-                error_msg += f" — retry after {retry_after}s"
+            until = _write_backoff(retry_after, time.time())
+            wait = int(until - time.time())
+            error_msg = f"Rate limited (HTTP 429) — pausing polls for {wait}s"
         payload = {
             "ok": False,
             "fetched_at": datetime.now(timezone.utc).isoformat(),
@@ -248,13 +315,14 @@ def main() -> int:
         return 3
 
     now_ts = time.time()
+    BACKOFF_PATH.unlink(missing_ok=True)
     session_bucket = Bucket.parse(raw.get("five_hour"))
     weekly_bucket = Bucket.parse(raw.get("seven_day"))
 
     history = _load_history()
 
     session = _evaluate(session_bucket, "session_util", history, now_ts)
-    weekly = _evaluate(weekly_bucket, "weekly_util", history, now_ts)
+    weekly = _evaluate_pace(weekly_bucket, WEEKLY_WINDOW_S)
 
     sample = {"ts": now_ts}
     if session_bucket:

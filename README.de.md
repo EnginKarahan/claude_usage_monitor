@@ -37,9 +37,14 @@ Farbe (pro Pille unabhängig berechnet):
 | 🟡 Gelb   | Prognose 100–103 % — am Limit.                                  |
 | 🔴 Rot    | Prognose ≥ 103 % — du wirst vor dem Reset leerlaufen.            |
 
-Die Prognose basiert auf einer gleitenden Burn-Rate aus den letzten
-Samples und ist auf einen 4-Stunden-Horizont begrenzt, damit ein kurzer
-Burst direkt nach einem Reset nicht ins nächste Quartal extrapoliert wird.
+Die **Session**-Prognose basiert auf einer gleitenden Burn-Rate aus den
+letzten Samples und ist auf einen 4-Stunden-Horizont begrenzt, damit ein
+kurzer Burst direkt nach einem Reset die Prognose nicht sprengt.
+
+Die **Wochen**-Prognose ist tempobasiert: Sind nach dem Anteil f des
+7-Tage-Fensters X % verbraucht, landest du bei diesem Tempo bei X / f zum
+Reset. Die ersten 24 h zählen als ein ganzer Tag, damit ein Burst direkt
+nach dem Wochenwechsel nicht auf Tausende Prozent hochgerechnet wird.
 
 Mauszeiger drauf für Tooltip mit den vollen Zahlen; Klick öffnet die
 Detail-Ansicht mit Fortschrittsbalken, Burn-Rate und Reset-Zeit.
@@ -55,7 +60,7 @@ cd claude_usage_monitor
 
 Dabei wird:
 - `~/.local/bin/claude-widget-poll` (Python-Poller) installiert
-- ein systemd-User-Timer eingerichtet und aktiviert (Polling alle 20 min)
+- ein systemd-User-Timer eingerichtet und aktiviert (Polling alle 10 min)
 - das Plasmoid via `kpackagetool6` installiert
 
 Danach in KDE: Rechtsklick auf die Leiste → *Elemente hinzufügen oder
@@ -90,7 +95,8 @@ das Plasmoid aus.
    - Schreibt `~/.cache/claude-widget/status.json` atomar.
 
 2. **systemd-User-Timer** (`backend/systemd/`)
-   - `claude-widget-poll.timer` triggert den Dienst alle 20 min.
+   - `claude-widget-poll.timer` triggert den Dienst alle 10 min. Bei HTTP 429 hält der
+     Poller sich an `Retry-After` und überspringt Ticks bis zum Ablauf.
    - Übersteht Neustarts (`Persistent=true`); feuert 2 min nach Login
      einmal initial.
 
@@ -128,10 +134,8 @@ systemctl --user restart plasma-plasmashell
 - Der OAuth-`accessToken` läuft regelmäßig ab. Claude Code erneuert ihn
   bei jeder interaktiven Sitzung; wenn du Claude eine Weile nicht nutzt
   und das Widget `HTTP 401` zeigt, einfach einmal `claude` starten.
-- Das `seven_day`-Fenster rollt offenbar stündlich, nicht wöchentlich —
-  `resets_at` ist der nächste stündliche Tick, nicht „Ende der Woche".
-  Das Widget begrenzt den Prognose-Horizont auf 4 h, damit das keine
-  unsinnigen Zahlen produziert.
+- Das `seven_day`-Fenster wird als exakt 7 Tage bis `resets_at`
+  angenommen; die Tempo-Prognose leitet daraus den Fensterbeginn ab.
 
 ## Lizenz
 
