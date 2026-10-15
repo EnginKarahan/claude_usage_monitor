@@ -132,6 +132,12 @@ PlasmoidItem {
         return m + "m"
     }
 
+    // ISO timestamp → short local date/time ("—" if missing).
+    function formatTimestamp(iso) {
+        if (!iso) return "—"
+        return new Date(iso).toLocaleString(Qt.locale(), Locale.ShortFormat)
+    }
+
     // Display projection capped at the poller's PROJECTION_CAP (200%).
     // Values at or above the cap are shown as "≥200 %" so unrealistic
     // single-burst extrapolations don't look like real numbers.

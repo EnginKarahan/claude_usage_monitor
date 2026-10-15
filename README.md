@@ -43,6 +43,30 @@ fraction f of the 7-day window, you're on track for X / f at reset. The
 first 24 h count as one full day so a burst right after the roll-over
 isn't extrapolated to thousands of percent.
 
+### Codex
+
+If [Codex CLI](https://github.com/openai/codex) is installed (`~/.codex`
+exists), the widget shows a second row with the same two pills for your
+ChatGPT plan's Codex limits, in the same 140 px: the top row (✻) is
+Claude, the bottom row (>_) is Codex. Without Codex the widget keeps the
+single, larger row.
+
+Codex numbers are queried live on every poll through Codex CLI's own app
+server (`codex app-server`, request `account/rateLimits/read`). It asks
+the backend for the current limits, refreshes Codex's token when needed
+and uses no quota, so usage from the browser or other devices shows up
+too. The systemd service usually has no Node on PATH, so the poller looks
+for the native binary inside the npm package (fnm, nvm, `~/.npm-global`,
+`/usr/(local/)lib/node_modules`) and then for `codex` on PATH. To point
+it elsewhere, set `CODEX_BIN` via `systemctl --user edit
+claude-widget-poll.service`.
+
+If the live query fails, the poller falls back to the rate-limit snapshots
+Codex CLI writes into its session logs (`~/.codex/sessions`). Those only
+reflect the last Codex request on this machine, and the tooltip and detail
+view then say so; a window that has reset since is shown as 0 % with no
+reset time.
+
 Hover for a tooltip with the full numbers; click to open a detail panel with
 progress bars, burn rate, and time to reset. Middle-click forces an
 immediate cache re-read.

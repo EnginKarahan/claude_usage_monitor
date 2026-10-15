@@ -91,3 +91,11 @@ msgstr "limit aşılacak"
 
 msgid "unknown"
 msgstr "bilinmiyor"
+
+#, qt-format
+msgid "<small>As of the last Codex request: %1</small>"
+msgstr "<small>Son Codex isteğindeki durum: %1</small>"
+
+#, qt-format
+msgid "Last Codex request: %1 · Plan: %2"
+msgstr "Son Codex isteği: %1 · Plan: %2"

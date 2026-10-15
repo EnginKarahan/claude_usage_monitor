@@ -10,11 +10,11 @@ ColumnLayout {
 
     required property var rootItem
     property string title: ""
-    property var data: null
+    property var bucketData: null
 
-    readonly property bool hasData: data !== null && data !== undefined
+    readonly property bool hasData: bucketData !== null && bucketData !== undefined
     readonly property color stateColor: hasData
-        ? rootItem.colorForState(data.state)
+        ? rootItem.colorForState(bucketData.state)
         : Kirigami.Theme.disabledTextColor
 
     spacing: Kirigami.Units.smallSpacing
@@ -36,7 +36,7 @@ ColumnLayout {
             Layout.fillWidth: true
         }
         Text {
-            text: bucket.hasData ? bucket.rootItem.stateLabel(bucket.data.state) : i18n("no data")
+            text: bucket.hasData ? bucket.rootItem.stateLabel(bucket.bucketData.state) : i18n("no data")
             color: bucket.stateColor
         }
     }
@@ -57,13 +57,13 @@ ColumnLayout {
 
         // Projected addition (ghost).
         Rectangle {
-            visible: bucket.hasData && bucket.data.projected > bucket.data.utilization
+            visible: bucket.hasData && bucket.bucketData.projected > bucket.bucketData.utilization
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.margins: 1
             width: bucket.hasData
-                ? Math.min(parent.width - 2, (parent.width - 2) * Math.min(bucket.data.projected, 100) / 100)
+                ? Math.min(parent.width - 2, (parent.width - 2) * Math.min(bucket.bucketData.projected, 100) / 100)
                 : 0
             radius: 2
             color: bucket.stateColor
@@ -78,7 +78,7 @@ ColumnLayout {
             anchors.bottom: parent.bottom
             anchors.margins: 1
             width: bucket.hasData
-                ? Math.min(parent.width - 2, (parent.width - 2) * Math.min(bucket.data.utilization, 100) / 100)
+                ? Math.min(parent.width - 2, (parent.width - 2) * Math.min(bucket.bucketData.utilization, 100) / 100)
                 : 0
             radius: 2
             color: bucket.stateColor
@@ -102,27 +102,27 @@ ColumnLayout {
         Layout.fillWidth: true
 
         Text { text: i18n("Used now");          color: Kirigami.Theme.disabledTextColor }
-        Text { text: bucket.hasData ? bucket.data.utilization + " %" : "—"; color: Kirigami.Theme.textColor }
+        Text { text: bucket.hasData ? bucket.bucketData.utilization + " %" : "—"; color: Kirigami.Theme.textColor }
 
         Text { text: i18n("Projected at reset"); color: Kirigami.Theme.disabledTextColor }
         Text {
             text: bucket.hasData
-                ? (bucket.data.forecast_available
-                    ? bucket.rootItem.formatProjection(bucket.data.projected)
-                    : i18n("%1 (no rate yet)", bucket.rootItem.formatProjection(bucket.data.projected)))
+                ? (bucket.bucketData.forecast_available
+                    ? bucket.rootItem.formatProjection(bucket.bucketData.projected)
+                    : i18n("%1 (no rate yet)", bucket.rootItem.formatProjection(bucket.bucketData.projected)))
                 : "—"
             color: Kirigami.Theme.textColor
         }
 
         Text { text: i18n("Burn rate");         color: Kirigami.Theme.disabledTextColor }
         Text {
-            text: (bucket.hasData && bucket.data.burn_rate_per_hour !== null)
-                ? bucket.data.burn_rate_per_hour + " %/h"
+            text: (bucket.hasData && bucket.bucketData.burn_rate_per_hour !== null)
+                ? bucket.bucketData.burn_rate_per_hour + " %/h"
                 : "—"
             color: Kirigami.Theme.textColor
         }
 
         Text { text: i18n("Reset in");          color: Kirigami.Theme.disabledTextColor }
-        Text { text: bucket.hasData ? bucket.rootItem.formatDuration(bucket.data.resets_in_s) : "—"; color: Kirigami.Theme.textColor }
+        Text { text: bucket.hasData ? bucket.rootItem.formatDuration(bucket.bucketData.resets_in_s) : "—"; color: Kirigami.Theme.textColor }
     }
 }

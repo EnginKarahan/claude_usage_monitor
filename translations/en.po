@@ -88,3 +88,11 @@ msgstr "projected to exceed limit"
 
 msgid "unknown"
 msgstr "unknown"
+
+#, qt-format
+msgid "<small>As of the last Codex request: %1</small>"
+msgstr "<small>As of the last Codex request: %1</small>"
+
+#, qt-format
+msgid "Last Codex request: %1 · Plan: %2"
+msgstr "Last Codex request: %1 · Plan: %2"

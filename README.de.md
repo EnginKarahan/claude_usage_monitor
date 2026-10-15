@@ -46,6 +46,31 @@ Die **Wochen**-Prognose ist tempobasiert: Sind nach dem Anteil f des
 Reset. Die ersten 24 h zählen als ein ganzer Tag, damit ein Burst direkt
 nach dem Wochenwechsel nicht auf Tausende Prozent hochgerechnet wird.
 
+### Codex
+
+Ist [Codex CLI](https://github.com/openai/codex) installiert (`~/.codex`
+existiert), zeigt das Widget eine zweite Zeile mit denselben zwei Pillen
+für die Codex-Limits deines ChatGPT-Plans, auf denselben 140 px: oben (✻)
+Claude, unten (>_) Codex. Ohne Codex bleibt es bei der einen, größeren
+Zeile.
+
+Die Codex-Werte werden bei jedem Abruf live über den App-Server von Codex
+CLI abgefragt (`codex app-server`, Anfrage `account/rateLimits/read`). Er
+holt die aktuellen Limits vom Server, erneuert bei Bedarf das Codex-Token
+und verbraucht kein Kontingent, sodass auch Verbrauch im Browser oder auf
+anderen Geräten erscheint. Der systemd-Dienst hat meist kein Node im PATH,
+deshalb sucht der Poller die native Programmdatei im npm-Paket (fnm, nvm,
+`~/.npm-global`, `/usr/(local/)lib/node_modules`) und danach `codex` im
+PATH. Liegt sie woanders, lässt sich `CODEX_BIN` über `systemctl --user
+edit claude-widget-poll.service` setzen.
+
+Schlägt die Live-Abfrage fehl, greift der Poller auf die Rate-Limit-Stände
+zurück, die Codex CLI in seine Sitzungsprotokolle schreibt
+(`~/.codex/sessions`). Die geben nur den Stand der letzten Codex-Anfrage
+auf diesem Rechner wieder, was Tooltip und Detailansicht dann auch
+anzeigen; ein inzwischen abgelaufenes Fenster erscheint als 0 % ohne
+Reset-Zeit.
+
 Mauszeiger drauf für Tooltip mit den vollen Zahlen; Klick öffnet die
 Detail-Ansicht mit Fortschrittsbalken, Burn-Rate und Reset-Zeit.
 Mittelklick erzwingt sofortiges Neu-Lesen des Caches.

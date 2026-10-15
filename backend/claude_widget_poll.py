@@ -7,13 +7,22 @@ the KDE plasmoid reads.
 
 Uses the OAuth access token Claude Code already stored in
 ~/.claude/.credentials.json — no separate auth, no scraping.
+
+Codex usage is queried live through Codex CLI's own app server, which
+also keeps Codex's token fresh. If that fails, the poller falls back to the
+rate-limit snapshots Codex writes into its session logs (~/.codex/sessions).
 """
 
 from __future__ import annotations
 
+import glob
 import json
 import os
+import shutil
+import signal
+import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -27,6 +36,27 @@ STATUS_PATH = CACHE_DIR / "status.json"
 HISTORY_PATH = CACHE_DIR / "history.json"
 # Written on HTTP 429: a unix timestamp before which polls are skipped.
 BACKOFF_PATH = CACHE_DIR / "backoff"
+
+CODEX_HOME = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
+CODEX_SESSIONS_DIR = CODEX_HOME / "sessions"
+# Only the most recently written session logs are searched.
+CODEX_MAX_FILES = 20
+# Give up on the live query after this long and use the session logs.
+CODEX_TIMEOUT_S = 20
+# The npm `codex` command is a Node launcher, and the systemd user service
+# usually has no node on PATH (fnm, nvm). So look for the native binary the
+# launcher would start; CODEX_BIN overrides the search.
+CODEX_NODE_MODULES = (
+    "~/.local/share/fnm/node-versions/*/installation/lib/node_modules",
+    "~/.nvm/versions/node/*/lib/node_modules",
+    "~/.npm-global/lib/node_modules",
+    "/usr/local/lib/node_modules",
+    "/usr/lib/node_modules",
+)
+CODEX_NATIVE_BINS = (
+    "@openai/codex/node_modules/@openai/codex-linux-*/vendor/*/bin/codex",
+    "@openai/codex-linux-*/vendor/*/bin/codex",
+)
 
 USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
 REFRESH_URL = "https://console.anthropic.com/v1/oauth/token"
@@ -215,6 +245,24 @@ def _evaluate(
     return _result(bucket, resets_in_s, projected, burn, forecast_available)
 
 
+def _idle_result() -> dict:
+    """A window that has rolled over since the last recorded activity.
+
+    The next window only starts with the next request, so there is no
+    reset time and nothing to forecast yet.
+    """
+    return {
+        "utilization": 0.0,
+        "projected": 0.0,
+        "projected_capped": False,
+        "resets_at": None,
+        "resets_in_s": None,
+        "burn_rate_per_hour": 0.0,
+        "forecast_available": False,
+        "state": "blue",
+    }
+
+
 def _evaluate_pace(bucket: Bucket | None, window_s: float) -> dict | None:
     """Whole-window forecast by pace (weekly bucket).
 
@@ -272,13 +320,31 @@ def _write_backoff(retry_after: str | None, now_ts: float) -> float:
     return until
 
 
-def main() -> int:
+def _previous_claude_status() -> dict:
+    """Last written Claude status, reused while a rate-limit hold is active."""
+    try:
+        prev = json.loads(STATUS_PATH.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {
+            "ok": False,
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "error": "Rate limited (HTTP 429) — waiting for the hold to expire",
+        }
+    prev.pop("codex", None)
+    return prev
+
+
+def _claude_payload(history: list[dict], sample: dict) -> tuple[dict, int]:
+    """Poll the Claude usage endpoint and add its utilization to `sample`.
+
+    Returns the top-level status fields and the process exit code.
+    """
     now_ts = time.time()
     backoff_until = _read_backoff_until()
     if now_ts < backoff_until:
         remaining = int(backoff_until - now_ts)
-        print(f"Skipping poll: rate-limit hold for another {remaining}s", file=sys.stderr)
-        return 0
+        print(f"Skipping Claude poll: rate-limit hold for another {remaining}s", file=sys.stderr)
+        return _previous_claude_status(), 0
     creds = _read_credentials()
     oauth = creds.get("claudeAiOauth", {})
     token = oauth.get("accessToken")
@@ -301,48 +367,256 @@ def main() -> int:
             "error": error_msg,
             "body": body[:500],
         }
-        _atomic_write(STATUS_PATH, payload)
         print(f"HTTP {e.code} from usage endpoint: {body[:200]}", file=sys.stderr)
-        return 2
+        return payload, 2
     except urllib.error.URLError as e:
         payload = {
             "ok": False,
             "fetched_at": datetime.now(timezone.utc).isoformat(),
             "error": f"Network: {e.reason}",
         }
-        _atomic_write(STATUS_PATH, payload)
         print(f"Network error: {e.reason}", file=sys.stderr)
-        return 3
+        return payload, 3
 
     now_ts = time.time()
     BACKOFF_PATH.unlink(missing_ok=True)
     session_bucket = Bucket.parse(raw.get("five_hour"))
     weekly_bucket = Bucket.parse(raw.get("seven_day"))
 
-    history = _load_history()
-
     session = _evaluate(session_bucket, "session_util", history, now_ts)
     weekly = _evaluate_pace(weekly_bucket, WEEKLY_WINDOW_S)
 
-    sample = {"ts": now_ts}
     if session_bucket:
         sample["session_util"] = session_bucket.utilization
     if weekly_bucket:
         sample["weekly_util"] = weekly_bucket.utilization
-    history.append(sample)
-    history = history[-HISTORY_MAX:]
-    _save_history(history)
 
     payload = {
         "ok": True,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
-        "subscription": creds.get("claudeAiOauth", {}).get("subscriptionType"),
+        "subscription": oauth.get("subscriptionType"),
         "session": session,
         "weekly": weekly,
         "raw": raw,
     }
+    return payload, 0
+
+
+def _codex_snapshot() -> tuple[dict, str | None] | None:
+    """Newest Codex rate-limit snapshot from the local session logs.
+
+    Codex CLI records the limits the server reported with each response
+    as a `token_count` event in ~/.codex/sessions/**/rollout-*.jsonl.
+    The numbers are therefore as of the last Codex request on this
+    machine. Returns (rate_limits, event timestamp) or None.
+    """
+    logs = sorted(
+        CODEX_SESSIONS_DIR.rglob("rollout-*.jsonl"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    for path in logs[:CODEX_MAX_FILES]:
+        try:
+            lines = path.read_text(errors="replace").splitlines()
+        except OSError:
+            continue
+        for line in reversed(lines):
+            if '"rate_limits"' not in line:
+                continue
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            limits = (event.get("payload") or {}).get("rate_limits") or {}
+            # Model-specific buckets (e.g. "premium") usually carry no
+            # windows; the general "codex" bucket is what /status shows.
+            if (limits.get("limit_id") or "codex") != "codex":
+                continue
+            if limits.get("primary") or limits.get("secondary"):
+                return limits, event.get("timestamp")
+    return None
+
+
+def _find_codex_bin() -> str | None:
+    if os.environ.get("CODEX_BIN"):
+        return os.environ["CODEX_BIN"]
+    native = [
+        path
+        for root in CODEX_NODE_MODULES
+        for suffix in CODEX_NATIVE_BINS
+        for path in glob.glob(os.path.join(os.path.expanduser(root), suffix))
+    ]
+    if native:
+        # Several Node versions may each carry a copy; take the newest.
+        return max(native, key=os.path.getmtime)
+    return shutil.which("codex")
+
+
+def _read_reply(proc: subprocess.Popen, want_id: int) -> dict:
+    for line in proc.stdout:
+        try:
+            msg = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if msg.get("id") == want_id:
+            if msg.get("error"):
+                raise RuntimeError(f"codex app-server: {msg['error'].get('message')}")
+            return msg.get("result") or {}
+    raise RuntimeError("no answer from codex app-server")
+
+
+def _codex_live_limits() -> dict:
+    """Live Codex limits via `codex app-server` (JSON-RPC over stdio).
+
+    The app server asks the backend for the current limits and refreshes
+    Codex's own token when needed; the query uses no quota. stdin has to
+    stay open until the answer arrives, or the server quits early.
+    Returns the limits in the same shape the session logs use.
+    """
+    binary = _find_codex_bin()
+    if binary is None:
+        raise RuntimeError("codex binary not found (set CODEX_BIN)")
+    proc = subprocess.Popen(
+        [binary, "app-server"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        start_new_session=True,
+    )
+
+    def kill_group() -> None:
+        # The whole group: a child holding stdout open would block reads.
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+    killer = threading.Timer(CODEX_TIMEOUT_S, kill_group)
+    killer.start()
+
+    def send(msg: dict) -> None:
+        proc.stdin.write(json.dumps(msg) + "\n")
+        proc.stdin.flush()
+
+    try:
+        send({
+            "id": 1,
+            "method": "initialize",
+            "params": {"clientInfo": {"name": "claude-widget", "version": "0.1"}},
+        })
+        _read_reply(proc, 1)
+        send({"method": "initialized"})
+        send({"id": 2, "method": "account/rateLimits/read"})
+        result = _read_reply(proc, 2)
+    finally:
+        killer.cancel()
+        # Closing stdin lets the server shut down cleanly (it keeps sqlite
+        # state in ~/.codex); kill only if it doesn't.
+        try:
+            proc.stdin.close()
+        except OSError:
+            pass
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            kill_group()
+            proc.wait()
+
+    snap = (result.get("rateLimitsByLimitId") or {}).get("codex") or result.get("rateLimits") or {}
+
+    def window(raw: dict | None) -> dict | None:
+        if not raw:
+            return None
+        return {
+            "used_percent": raw.get("usedPercent"),
+            "window_minutes": raw.get("windowDurationMins"),
+            "resets_at": raw.get("resetsAt"),
+        }
+
+    return {
+        "primary": window(snap.get("primary")),
+        "secondary": window(snap.get("secondary")),
+        "plan_type": snap.get("planType"),
+    }
+
+
+def _codex_window(raw: dict | None) -> tuple[Bucket | None, bool]:
+    """Parse one Codex window; the flag is True if it is idle.
+
+    Idle means it has reset since the snapshot, or it hasn't started yet.
+    """
+    if not raw or raw.get("used_percent") is None:
+        return None, False
+    if not raw.get("resets_at"):
+        return None, raw["used_percent"] == 0
+    bucket = Bucket(
+        utilization=float(raw["used_percent"]),
+        resets_at=datetime.fromtimestamp(raw["resets_at"], timezone.utc),
+    )
+    return bucket, bucket.resets_at <= datetime.now(timezone.utc)
+
+
+def _codex_payload(history: list[dict], sample: dict, now_ts: float) -> dict:
+    """Codex status block; `available` is False if Codex isn't installed."""
+    if not CODEX_SESSIONS_DIR.is_dir():
+        return {"available": False}
+    try:
+        limits = _codex_live_limits()
+        updated_at = datetime.now(timezone.utc).isoformat()
+        source = "live"
+    except (OSError, RuntimeError) as e:
+        print(f"Codex live query failed, using session logs: {e}", file=sys.stderr)
+        found = _codex_snapshot()
+        if found is None:
+            return {
+                "available": True,
+                "ok": False,
+                "error": f"Live query failed ({e}) and no data in the Codex session logs",
+            }
+        limits, updated_at = found
+        source = "logs"
+
+    session_bucket, session_reset = _codex_window(limits.get("primary"))
+    if session_reset:
+        session = _idle_result()
+        sample["codex_session_util"] = 0.0
+    else:
+        session = _evaluate(session_bucket, "codex_session_util", history, now_ts)
+        if session_bucket:
+            sample["codex_session_util"] = session_bucket.utilization
+
+    secondary = limits.get("secondary") or {}
+    weekly_bucket, weekly_reset = _codex_window(secondary)
+    if weekly_reset:
+        weekly = _idle_result()
+    else:
+        window_s = (secondary.get("window_minutes") or WEEKLY_WINDOW_S / 60) * 60
+        weekly = _evaluate_pace(weekly_bucket, window_s)
+
+    return {
+        "available": True,
+        "ok": True,
+        "source": source,
+        "updated_at": updated_at,
+        "plan": limits.get("plan_type"),
+        "session": session,
+        "weekly": weekly,
+    }
+
+
+def main() -> int:
+    history = _load_history()
+    sample: dict = {}
+    payload, exit_code = _claude_payload(history, sample)
+    now_ts = time.time()
+    payload["codex"] = _codex_payload(history, sample, now_ts)
+
+    if sample:
+        history.append({"ts": now_ts, **sample})
+        _save_history(history[-HISTORY_MAX:])
     _atomic_write(STATUS_PATH, payload)
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":

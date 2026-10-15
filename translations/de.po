@@ -88,3 +88,11 @@ msgstr "Limit wird voraussichtlich überschritten"
 
 msgid "unknown"
 msgstr "unbekannt"
+
+#, qt-format
+msgid "<small>As of the last Codex request: %1</small>"
+msgstr "<small>Stand der letzten Codex-Anfrage: %1</small>"
+
+#, qt-format
+msgid "Last Codex request: %1 · Plan: %2"
+msgstr "Letzte Codex-Anfrage: %1 · Plan: %2"
